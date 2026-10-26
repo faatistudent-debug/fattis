@@ -103,6 +103,10 @@ export interface Recipe {
   ingredients: string[];
   steps: string[];
   athleteBenefit: string;
+  authorId?: string;
+  authorName?: string;
+  authorEmail?: string;
+  createdAt?: string;
 }
 
 export interface ExploreArticle {

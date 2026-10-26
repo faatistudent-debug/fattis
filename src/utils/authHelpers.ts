@@ -122,7 +122,6 @@ export function resolveIdentifierToEmail(identifier: string): {
   const demoAliasMap: Record<string, string> = {
     faati: 'faati.nutricionista@rendiplus.demo',
     faatistudent: 'faati.nutricionista@rendiplus.demo',
-    'faatistudent@gmail.com': 'faati.nutricionista@rendiplus.demo',
     'faati nutricionista': 'faati.nutricionista@rendiplus.demo',
     lucas: 'lucas.taekwondo@rendiplus.demo',
     'lucas silva': 'lucas.taekwondo@rendiplus.demo',

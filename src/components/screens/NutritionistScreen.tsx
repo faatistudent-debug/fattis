@@ -86,6 +86,7 @@ interface NutritionistScreenProps {
   onDeleteRecipe?: (id: string) => void;
   onUpdateRecipe?: (recipe: Recipe) => void;
   onViewAthleteHome: () => void;
+  currentUserId?: string;
 }
 
 export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
@@ -104,6 +105,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
   onDeleteRecipe,
   onUpdateRecipe,
   onViewAthleteHome,
+  currentUserId,
 }) => {
   const [activeTab, setActiveTab] = useState<'progreso' | 'editar_nutricion' | 'recetas'>('progreso');
   const [isEditingNutriName, setIsEditingNutriName] = useState(false);

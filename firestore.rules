@@ -118,14 +118,14 @@ service cloud.firestore {
       }
     }
 
-    // Collection: Recipes (Public read, Nutritionist write)
+    // Collection: Recipes (Public read, author-only edit/delete)
     match /recipes/{recipeId} {
       allow get, list: if isSignedIn();
-      allow create: if isNutritionist() && isValidId(recipeId) && isValidRecipe(request.resource.data);
-      allow update: if isNutritionist() && isValidId(recipeId) && isValidRecipe(request.resource.data)
-                    && (resource.data.authorId == request.auth.uid || resource.data.authorId == '');
-      allow delete: if isNutritionist() && isValidId(recipeId)
-                    && (resource.data.authorId == request.auth.uid || resource.data.authorId == '');
+      allow create: if isSignedIn() && isValidId(recipeId) && isValidRecipe(request.resource.data);
+      allow update: if isSignedIn() && isValidId(recipeId) && isValidRecipe(request.resource.data)
+                    && (resource.data.authorId == request.auth.uid || !('authorId' in resource.data) || resource.data.authorId == '');
+      allow delete: if isSignedIn() && isValidId(recipeId)
+                    && (resource.data.authorId == request.auth.uid || !('authorId' in resource.data) || resource.data.authorId == '');
     }
   }
 }

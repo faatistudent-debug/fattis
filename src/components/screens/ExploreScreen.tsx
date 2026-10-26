@@ -12,6 +12,7 @@ interface ExploreScreenProps {
   onOpenCoachView?: () => void;
   onDeleteRecipe?: (id: string) => void;
   canDelete?: boolean;
+  currentUserId?: string;
 }
 
 export const ExploreScreen: React.FC<ExploreScreenProps> = ({
@@ -20,6 +21,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({
   onOpenCoachView,
   onDeleteRecipe,
   canDelete,
+  currentUserId,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<'Popular' | 'Autocuidado' | 'Salud' | 'Ejercicios'>('Popular');
   const [activeArticle, setActiveArticle] = useState<ExploreArticle | null>(null);
@@ -65,6 +67,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({
         recipes={recipes}
         onDeleteRecipe={onDeleteRecipe}
         canDelete={canDelete}
+        currentUserId={currentUserId}
       />
     );
   }

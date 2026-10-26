@@ -6,6 +6,7 @@ interface RecipeModalProps {
   onClose: () => void;
   onDelete?: (recipeId: string) => void;
   canDelete?: boolean;
+  currentUserId?: string;
 }
 
 export const RecipeModal: React.FC<RecipeModalProps> = ({
@@ -13,13 +14,18 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
   onClose,
   onDelete,
   canDelete = false,
+  currentUserId,
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!recipe) return null;
 
+  const isAuthor = Boolean(
+    currentUserId && recipe.authorId && recipe.authorId === currentUserId
+  );
+
   const handleDelete = () => {
-    if (onDelete) {
+    if (onDelete && (isAuthor || !recipe.authorId)) {
       onDelete(recipe.id);
       onClose();
     }
@@ -60,9 +66,25 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
             <h3 className="text-lg font-black text-gray-900 leading-tight mb-1">
               {recipe.title}
             </h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
+            <p className="text-xs text-gray-600 leading-relaxed mb-2">
               {recipe.description}
             </p>
+
+            {/* Author Attribution & Lock Indicator */}
+            <div className="flex items-center justify-between gap-2 bg-[#fefce8] border border-amber-300/80 px-3 py-1.5 rounded-xl text-[11px] shadow-2xs">
+              <span className="font-bold text-amber-950 truncate">
+                👤 Creado por: <strong>{recipe.authorName || 'Nutricionista Rendí+'}</strong>
+              </span>
+              {isAuthor ? (
+                <span className="text-[10px] bg-emerald-100 text-emerald-900 font-extrabold px-2 py-0.5 rounded-full border border-emerald-300 shrink-0">
+                  ✓ Tu Receta
+                </span>
+              ) : (
+                <span className="text-[10px] bg-gray-200/80 text-gray-700 font-bold px-2 py-0.5 rounded-full border border-gray-300 shrink-0">
+                  🔒 Solo Lectura
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Macros Bar */}
@@ -133,13 +155,13 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
 
         {/* Footer */}
         <div className="pt-3 mt-3 border-t border-gray-200 space-y-2">
-          {/* Delete Option for Nutritionist */}
-          {(onDelete || canDelete) && (
+          {/* Delete Option: ONLY for the Author who created it */}
+          {onDelete && isAuthor ? (
             <div>
               {confirmDelete ? (
                 <div className="bg-rose-50 border border-rose-300 p-2.5 rounded-xl text-center space-y-2 animate-fadeIn">
                   <span className="text-xs font-black text-rose-950 block">
-                    ¿Eliminar esta receta del catálogo?
+                    ¿Eliminar tu receta "{recipe.title}" del catálogo?
                   </span>
                   <div className="flex gap-2 justify-center">
                     <button
@@ -165,11 +187,15 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                   className="w-full py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 font-black text-xs text-rose-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>🗑️</span>
-                  <span>Eliminar esta receta del catálogo</span>
+                  <span>Eliminar mi receta del catálogo</span>
                 </button>
               )}
             </div>
-          )}
+          ) : !isAuthor && recipe.authorName ? (
+            <div className="bg-slate-100 border border-slate-200 rounded-xl p-2 text-center text-[10px] text-slate-600 font-semibold">
+              🔒 Esta receta fue guardada por {recipe.authorName} y nadie más puede modificarla o eliminarla.
+            </div>
+          ) : null}
 
           <button
             type="button"

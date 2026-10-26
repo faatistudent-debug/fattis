@@ -8,6 +8,7 @@ interface RecipesScreenProps {
   recipes?: Recipe[];
   onDeleteRecipe?: (id: string) => void;
   canDelete?: boolean;
+  currentUserId?: string;
 }
 
 export const RecipesScreen: React.FC<RecipesScreenProps> = ({
@@ -15,6 +16,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({
   recipes = RECIPES_DATA,
   onDeleteRecipe,
   canDelete = false,
+  currentUserId,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<
     'Popular' | 'Autocuidado' | 'Salud' | 'Ejercicios'
@@ -160,8 +162,8 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({
                       key={rec.id}
                       className="group relative flex flex-col items-center bg-white/70 hover:bg-white rounded-2xl p-1.5 transition-all border border-transparent hover:border-amber-300 shadow-2xs hover:shadow-sm"
                     >
-                      {/* Delete button on card if allowed */}
-                      {(canDelete || onDeleteRecipe) && (
+                      {/* Delete button on card ONLY if current user is the author */}
+                      {onDeleteRecipe && currentUserId && rec.authorId === currentUserId && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -169,7 +171,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({
                             setRecipeToDelete(rec);
                           }}
                           className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-black flex items-center justify-center shadow-xs cursor-pointer z-10"
-                          title="Eliminar receta"
+                          title="Eliminar mi receta"
                         >
                           ✕
                         </button>
@@ -190,9 +192,16 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({
                         <span className="text-[10px] font-bold text-gray-800 text-center leading-tight line-clamp-2">
                           {rec.title}
                         </span>
-                        <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">
-                          {rec.calories} kcal
-                        </span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-[9px] font-extrabold text-amber-800">
+                            {rec.calories} kcal
+                          </span>
+                          {rec.authorId && rec.authorId === currentUserId && (
+                            <span className="text-[8px] bg-emerald-100 text-emerald-800 font-bold px-1 rounded">
+                              Tuya
+                            </span>
+                          )}
+                        </div>
                       </button>
                     </div>
                   ))}
@@ -210,6 +219,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({
           onClose={() => setActiveRecipe(null)}
           onDelete={onDeleteRecipe}
           canDelete={canDelete}
+          currentUserId={currentUserId}
         />
       )}
     </div>
