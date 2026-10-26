@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { UserProfile, DayHabitLog, MoodType, CustomMealEntry } from '../../types';
+import { UserProfile, DayHabitLog, CustomMealEntry } from '../../types';
 import { SportIcon } from '../SportIcons';
-import { MoodEmoji } from '../MoodEmojis';
 import { NutriOtter } from '../NutriOtter';
 import { NUTRI_TIPS } from '../../data/initialData';
 import { CustomMealModal } from '../CustomMealModal';
@@ -28,7 +27,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [viewingPhotoMeal, setViewingPhotoMeal] = useState<CustomMealEntry | null>(null);
 
   const allTips = activeNutriTip ? [activeNutriTip, ...NUTRI_TIPS] : NUTRI_TIPS;
-  const moods: MoodType[] = ['triste', 'feliz', 'pensativo', 'estresado', 'dormido'];
 
   const customMeals = todayLog.customMeals || [];
   const formattedDate = formatFullDate(todayLog.date);
@@ -114,24 +112,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <span className="text-[11px] font-black text-amber-950 mt-0.5">
             {formattedDate.shortFormatted}
           </span>
-        </div>
-      </div>
-
-      {/* Mood Tracker: "¿Cómo te sentís hoy?" */}
-      <div className="bg-[#cbd5e1]/70 px-3 py-2.5 rounded-2xl border border-white/60">
-        <div className="text-center mb-1.5">
-          <span className="text-xs font-bold text-gray-800">¿Cómo te sentís hoy?</span>
-        </div>
-        <div className="flex items-center justify-around px-1">
-          {moods.map((m) => (
-            <MoodEmoji
-              key={m}
-              mood={m}
-              size={36}
-              selected={todayLog.mood === m}
-              onClick={() => onUpdateLog({ mood: m })}
-            />
-          ))}
         </div>
       </div>
 

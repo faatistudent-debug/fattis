@@ -75,6 +75,7 @@ export interface CustomMealEntry {
 }
 
 export interface DayHabitLog {
+  userId?: string;
   date: string; // YYYY-MM-DD
   mood?: MoodType;
   moodNote?: string;

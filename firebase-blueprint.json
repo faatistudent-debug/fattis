@@ -1,0 +1,360 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access information",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The unique Firebase Auth UID of the user",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "name": {
+          "type": "string",
+          "description": "Full display name of the user",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "System role controlling access rights",
+          "enum": ["Deportista", "Nutricionista", "Entrenador"]
+        },
+        "sport": {
+          "type": "string",
+          "description": "Primary sport for athletes",
+          "enum": ["taekwondo", "natacion", "voleibol", "baloncesto", "atletismo", "esgrima"]
+        },
+        "ageGroup": {
+          "type": "string",
+          "description": "Athlete age group category",
+          "enum": ["12 - 17 a", "18 - 29 a", "> 30 a"]
+        },
+        "gender": {
+          "type": "string",
+          "description": "Gender identity",
+          "enum": ["Masculino", "Femenino"]
+        },
+        "beltColor": {
+          "type": "string",
+          "description": "Belt category for combat sports",
+          "enum": ["blanco", "amarillo", "verde", "celeste", "rojo", "negro"]
+        },
+        "weeklyFrequency": {
+          "type": "number",
+          "description": "Number of training sessions per week (1-7)"
+        },
+        "sessionDuration": {
+          "type": "string",
+          "description": "Average duration of training sessions",
+          "enum": ["Menos de 1 hora", "1 a 2 horas", "Más de 2 horas"]
+        },
+        "habitualIntensity": {
+          "type": "string",
+          "description": "Normal intensity of workouts",
+          "enum": ["Baja", "Moderada", "Alta"]
+        },
+        "habitualSchedule": {
+          "type": "string",
+          "description": "Preferred schedule for training",
+          "enum": ["Mañana", "Tarde", "Noche"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of user creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of profile update"
+        }
+      },
+      "required": ["userId", "email", "name", "role"]
+    },
+    "DayHabitLog": {
+      "title": "DayHabitLog",
+      "description": "Daily nutrition, hydration, mood, and training record for a specific athlete",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner athlete UID",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Calendar date key YYYY-MM-DD",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "mood": {
+          "type": "string",
+          "description": "Emotional state emoji identifier",
+          "enum": ["triste", "feliz", "pensativo", "estresado", "dormido"]
+        },
+        "moodNote": {
+          "type": "string",
+          "description": "Personal reflection or journal note for the day",
+          "maxLength": 1000
+        },
+        "waterGlasses": {
+          "type": "number",
+          "description": "Glasses of water consumed (0-15)"
+        },
+        "sleepHours": {
+          "type": "number",
+          "description": "Hours of sleep recorded"
+        },
+        "sleepCompleted": {
+          "type": "boolean",
+          "description": "Whether sleep goal was met"
+        },
+        "trainingHours": {
+          "type": "number",
+          "description": "Hours dedicated to training"
+        },
+        "trainingCompleted": {
+          "type": "boolean",
+          "description": "Whether planned training was completed"
+        },
+        "restQuality": {
+          "type": "string",
+          "description": "Perceived sleep/rest quality",
+          "enum": ["Bajo", "Bueno", "Excelente"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId", "date", "waterGlasses"]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Healthy sports nutrition recipe managed by nutritionists",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Recipe identifier",
+          "maxLength": 128
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of the nutritionist who created the recipe",
+          "maxLength": 128
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Name of author nutritionist",
+          "maxLength": 120
+        },
+        "title": {
+          "type": "string",
+          "description": "Dish title",
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "description": "Meal category or custom meal time",
+          "maxLength": 100
+        },
+        "prepTime": {
+          "type": "string",
+          "description": "Preparation duration text",
+          "maxLength": 60
+        },
+        "calories": {
+          "type": "number",
+          "description": "Estimated kcal count"
+        },
+        "protein": {
+          "type": "string",
+          "description": "Protein grams formatted string",
+          "maxLength": 30
+        },
+        "carbs": {
+          "type": "string",
+          "description": "Carbs grams formatted string",
+          "maxLength": 30
+        },
+        "fats": {
+          "type": "string",
+          "description": "Fats grams formatted string",
+          "maxLength": 30
+        },
+        "image": {
+          "type": "string",
+          "description": "Dish photo URL or uploaded image data",
+          "maxLength": 500000
+        },
+        "description": {
+          "type": "string",
+          "description": "Dish overview description",
+          "maxLength": 2000
+        },
+        "athleteBenefit": {
+          "type": "string",
+          "description": "Athletic and nutritional benefit explanation",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last modified timestamp"
+        }
+      },
+      "required": ["id", "authorId", "title", "category"]
+    },
+    "NutritionPlanNote": {
+      "title": "NutritionPlanNote",
+      "description": "Nutritional plan and tips prescribed to an athlete",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Plan note ID",
+          "maxLength": 128
+        },
+        "athleteId": {
+          "type": "string",
+          "description": "Target athlete user UID",
+          "maxLength": 128
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Author nutritionist UID",
+          "maxLength": 128
+        },
+        "author": {
+          "type": "string",
+          "description": "Author nutritionist name",
+          "maxLength": 120
+        },
+        "date": {
+          "type": "string",
+          "description": "Prescription date YYYY-MM-DD",
+          "maxLength": 10
+        },
+        "targetCalories": {
+          "type": "number",
+          "description": "Target daily calories"
+        },
+        "targetProtein": {
+          "type": "number",
+          "description": "Target daily protein in grams"
+        },
+        "targetWaterGlasses": {
+          "type": "number",
+          "description": "Target daily water glasses"
+        },
+        "title": {
+          "type": "string",
+          "description": "Plan headline",
+          "maxLength": 200
+        },
+        "activeNutriTip": {
+          "type": "string",
+          "description": "Prominent nutritional tip for athlete dashboard",
+          "maxLength": 500
+        }
+      },
+      "required": ["id", "athleteId", "authorId", "title"]
+    },
+    "InjuryRecord": {
+      "title": "InjuryRecord",
+      "description": "Injury and medical recovery tracking for an athlete",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Injury entry ID",
+          "maxLength": 128
+        },
+        "athleteId": {
+          "type": "string",
+          "description": "Target athlete user UID",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Injury diagnosis title",
+          "maxLength": 200
+        },
+        "date": {
+          "type": "string",
+          "description": "Incident or diagnosis date",
+          "maxLength": 10
+        },
+        "status": {
+          "type": "string",
+          "description": "Current medical status",
+          "enum": ["Activa", "En recuperación", "Dada de alta"]
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity grade",
+          "enum": ["Leve", "Moderada", "Grave"]
+        },
+        "bodyArea": {
+          "type": "string",
+          "description": "Affected anatomical region",
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed clinical or functional description",
+          "maxLength": 1500
+        },
+        "treatment": {
+          "type": "string",
+          "description": "Physiotherapy and rehabilitation protocols",
+          "maxLength": 1500
+        },
+        "recoveryProgress": {
+          "type": "number",
+          "description": "Percentage recovery from 0 to 100"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Follow-up clinician notes",
+          "maxLength": 1000
+        }
+      },
+      "required": ["id", "athleteId", "title", "status", "severity"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual account profiles storing authentication identity and system role"
+    },
+    "/athletes/{athleteId}": {
+      "schema": "UserProfile",
+      "description": "Athlete summary profile data accessible by athlete owner, coach, and nutritionist"
+    },
+    "/athletes/{athleteId}/dailyLogs/{date}": {
+      "schema": "DayHabitLog",
+      "description": "Daily meal entries, hydration, mood reflections, and habit adherence"
+    },
+    "/athletes/{athleteId}/nutritionPlans/{planId}": {
+      "schema": "NutritionPlanNote",
+      "description": "Nutritional plans assigned to an individual athlete"
+    },
+    "/athletes/{athleteId}/injuries/{injuryId}": {
+      "schema": "InjuryRecord",
+      "description": "Athlete injury records managed by authorized coach or health professional"
+    },
+    "/recipes/{recipeId}": {
+      "schema": "Recipe",
+      "description": "Curated healthy recipes created and edited by nutritionists"
+    }
+  }
+}

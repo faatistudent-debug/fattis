@@ -11,7 +11,6 @@ import {
   AthleteData,
 } from '../../types';
 import { SportIcon } from '../SportIcons';
-import { MoodEmoji } from '../MoodEmojis';
 
 interface CoachScreenProps {
   coachName: string;
@@ -24,7 +23,6 @@ interface CoachScreenProps {
   logsHistory: Record<string, DayHabitLog>;
   injuries: InjuryRecord[];
   onUpdateInjuries: (injuries: InjuryRecord[]) => void;
-  onUpdateAthleteTraining: (updates: Partial<UserProfile>) => void;
   onViewAthleteHome: () => void;
 }
 
@@ -39,10 +37,9 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
   logsHistory,
   injuries,
   onUpdateInjuries,
-  onUpdateAthleteTraining,
   onViewAthleteHome,
 }) => {
-  const [activeTab, setActiveTab] = useState<'progreso' | 'lesiones' | 'ajustar_entreno'>('lesiones');
+  const [activeTab, setActiveTab] = useState<'progreso' | 'lesiones' | 'perfil_deportista'>('progreso');
   const [isEditingCoachName, setIsEditingCoachName] = useState(false);
   const [tempCoachName, setTempCoachName] = useState(coachName);
 
@@ -256,14 +253,14 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 
         <button
           type="button"
-          onClick={() => setActiveTab('ajustar_entreno')}
+          onClick={() => setActiveTab('perfil_deportista')}
           className={`py-2 px-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
-            activeTab === 'ajustar_entreno'
+            activeTab === 'perfil_deportista'
               ? 'bg-white text-gray-950 shadow-sm'
               : 'text-gray-700 hover:text-gray-900'
           }`}
         >
-          Ajustar Entreno
+          Ficha Deportista
         </button>
       </div>
 
@@ -444,14 +441,12 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
             </div>
 
             <div className="bg-sky-100/90 border border-sky-300 p-2.5 rounded-2xl text-center flex flex-col items-center justify-between">
-              <span className="text-[10px] font-bold text-sky-900 block">Estado Anímico</span>
-              {todayLog.mood ? (
-                <MoodEmoji mood={todayLog.mood} size={30} />
-              ) : (
-                <span className="text-xs font-bold text-gray-600">Neutral</span>
-              )}
-              <span className="text-[9px] font-extrabold text-sky-900 capitalize">
-                {todayLog.mood || 'Listo'}
+              <span className="text-[10px] font-bold text-sky-900 block">Hidratación</span>
+              <span className="text-lg font-black text-gray-950 my-0.5 block">
+                {todayLog.waterGlasses * 250} ml
+              </span>
+              <span className="text-[9px] font-extrabold text-sky-900">
+                {todayLog.waterGlasses} de 8 vasos
               </span>
             </div>
           </div>
@@ -485,119 +480,93 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         </div>
       )}
 
-      {/* TAB 3: AJUSTAR PLAN DE ENTRENAMIENTO */}
-      {activeTab === 'ajustar_entreno' && (
+      {/* TAB 3: FICHA DEPORTIVA DEL DEPORTISTA (SOLO LECTURA) */}
+      {activeTab === 'perfil_deportista' && (
         <div className="space-y-3">
-          <div className="bg-[#f5eedc] border border-[#e4dcbf] p-3.5 rounded-3xl shadow-xs space-y-3">
-            <span className="text-xs font-black text-gray-900 block">
-              Ajustes de Parámetros Deportivos para {athleteProfile.name}
-            </span>
+          {/* Read-Only Notice */}
+          <div className="bg-teal-950/80 border border-teal-500/40 p-3 rounded-2xl text-teal-200 text-xs shadow-xs">
+            <div className="flex items-center gap-1.5 font-bold text-teal-300">
+              <span className="text-base">🔒</span>
+              <span>Modo Consulta del Entrenador (Solo Lectura)</span>
+            </div>
+            <p className="text-[11px] text-teal-100/90 mt-1 leading-relaxed">
+              Como entrenador, tienes acceso para consultar el perfil deportivo, hábitos y estado de{' '}
+              <strong>{athleteProfile.name}</strong>. Por seguridad y privacidad, los datos personales únicamente pueden ser modificados por el propio deportista.
+            </p>
+          </div>
 
-            {/* Frecuencia semanal */}
-            <div>
-              <label className="text-[11px] font-bold text-gray-800 block mb-1">
-                Frecuencia semanal programada
-              </label>
-              <div className="grid grid-cols-7 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7].map((num) => {
-                  const isSelected = athleteProfile.weeklyFrequency === num;
-                  return (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => onUpdateAthleteTraining({ weeklyFrequency: num })}
-                      className={`py-1.5 rounded-lg text-xs font-extrabold cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-400'
-                          : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      {num} d
-                    </button>
-                  );
-                })}
+          <div className="bg-[#fdfbf7] border-2 border-teal-500/50 p-4 rounded-3xl shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-teal-100 flex items-center justify-center">
+                  <SportIcon sport={athleteProfile.sport} size={28} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-gray-950 leading-tight">
+                    {athleteProfile.name}
+                  </h3>
+                  <span className="text-[10px] text-teal-800 font-bold uppercase tracking-wider">
+                    {athleteProfile.sport} • {athleteProfile.ageGroup} • {athleteProfile.gender}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg border border-gray-300">
+                🔒 Protegido
+              </span>
+            </div>
+
+            {/* Read-Only Specs Grid */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
+                <span className="text-[10px] text-gray-500 font-bold block mb-0.5">
+                  Frecuencia Semanal
+                </span>
+                <span className="text-sm font-black text-teal-950">
+                  {athleteProfile.weeklyFrequency || 5} días por semana
+                </span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Configurado por deportista</span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
+                <span className="text-[10px] text-gray-500 font-bold block mb-0.5">
+                  Duración por Sesión
+                </span>
+                <span className="text-sm font-black text-teal-950">
+                  {athleteProfile.sessionDuration || '1 a 2 horas'}
+                </span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Tiempo habitual de entreno</span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
+                <span className="text-[10px] text-gray-500 font-bold block mb-0.5">
+                  Intensidad Técnica
+                </span>
+                <span className="text-sm font-black text-teal-950">
+                  {athleteProfile.habitualIntensity || 'Moderada'}
+                </span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Carga física habitual</span>
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
+                <span className="text-[10px] text-gray-500 font-bold block mb-0.5">
+                  Turno Habitual
+                </span>
+                <span className="text-sm font-black text-teal-950">
+                  {athleteProfile.habitualSchedule || 'Tarde'}
+                </span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Horario de preferencia</span>
               </div>
             </div>
 
-            {/* Duración por sesión */}
-            <div>
-              <label className="text-[11px] font-bold text-gray-800 block mb-1">
-                Duración por sesión de entrenamiento
-              </label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {(['Menos de 1 hora', '1 a 2 horas', 'Más de 2 horas'] as TrainingDuration[]).map(
-                  (dur) => {
-                    const isSelected = athleteProfile.sessionDuration === dur;
-                    return (
-                      <button
-                        key={dur}
-                        type="button"
-                        onClick={() => onUpdateAthleteTraining({ sessionDuration: dur })}
-                        className={`py-2 px-1 text-center text-xs font-bold rounded-xl cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                        }`}
-                      >
-                        {dur}
-                      </button>
-                    );
-                  }
-                )}
+            {/* Belt or Specialization if present */}
+            {athleteProfile.beltColor && (
+              <div className="bg-teal-50/70 p-2.5 rounded-xl border border-teal-200 flex items-center justify-between text-xs">
+                <span className="font-bold text-teal-950">Grado / Cinta:</span>
+                <span className="font-black text-teal-800 capitalize bg-white px-2 py-0.5 rounded border border-teal-300">
+                  {athleteProfile.beltColor}
+                </span>
               </div>
-            </div>
-
-            {/* Intensidad habitual */}
-            <div>
-              <label className="text-[11px] font-bold text-gray-800 block mb-1">
-                Intensidad técnica habitual
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['Baja', 'Moderada', 'Alta'] as TrainingIntensity[]).map((intensity) => {
-                  const isSelected = athleteProfile.habitualIntensity === intensity;
-                  return (
-                    <button
-                      key={intensity}
-                      type="button"
-                      onClick={() => onUpdateAthleteTraining({ habitualIntensity: intensity })}
-                      className={`py-2 px-1 text-center text-xs font-bold rounded-xl cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-teal-600 text-white shadow-sm'
-                          : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      {intensity}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Horario habitual */}
-            <div>
-              <label className="text-[11px] font-bold text-gray-800 block mb-1">
-                Turno de entrenamiento
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['Mañana', 'Tarde', 'Noche'] as TrainingSchedule[]).map((sched) => {
-                  const isSelected = athleteProfile.habitualSchedule === sched;
-                  return (
-                    <button
-                      key={sched}
-                      type="button"
-                      onClick={() => onUpdateAthleteTraining({ habitualSchedule: sched })}
-                      className={`py-2 px-1 text-center text-xs font-bold rounded-xl cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-teal-600 text-white shadow-sm'
-                          : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      {sched}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}

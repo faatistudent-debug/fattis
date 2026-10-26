@@ -563,6 +563,17 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
             </div>
           </div>
 
+          {/* Read-Only Notice for Nutritionist */}
+          <div className="bg-emerald-950/80 border border-emerald-500/40 p-2.5 rounded-2xl text-emerald-200 text-xs shadow-xs flex items-center justify-between">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-300">
+              <span className="text-sm">🔒</span>
+              <span>Modo Consulta de Nutricionista (Solo Lectura)</span>
+            </div>
+            <span className="text-[10px] bg-emerald-900/90 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-600/40 font-semibold">
+              Datos protegidos del deportista
+            </span>
+          </div>
+
           {/* Athlete Profile Card */}
           <div className="bg-[#fdfbf7] border-2 border-emerald-400 rounded-2xl p-3 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
@@ -601,10 +612,13 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                   ({todayLog.waterGlasses}/8 vasos)
                 </span>
               </div>
-              <div className="bg-purple-50 p-2 rounded-xl border border-purple-200">
-                <span className="text-[9px] font-bold text-purple-900 block">Estado Ánimo</span>
-                <span className="text-base font-black text-purple-950 capitalize">
-                  {todayLog.mood || 'Feliz'}
+              <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                <span className="text-[9px] font-bold text-emerald-900 block">Sueño & Descanso</span>
+                <span className="text-base font-black text-emerald-950">
+                  {todayLog.sleepHours || 8} hrs
+                </span>
+                <span className="text-[9px] font-bold text-emerald-800 block">
+                  {todayLog.sleepCompleted ? 'Meta cumplida' : 'En descanso'}
                 </span>
               </div>
             </div>
