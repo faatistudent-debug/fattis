@@ -1,0 +1,6 @@
+{
+  "name": "Rendí+",
+  "description": "Desarrolla hábitos alimenticios y deportivos saludables para un excelente rendimiento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
