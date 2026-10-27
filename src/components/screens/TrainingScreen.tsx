@@ -37,11 +37,13 @@ export const TrainingScreen: React.FC<TrainingScreenProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="text-xs text-gray-700 bg-white/70 px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer"
+          className="text-xs font-bold text-gray-800 bg-white/80 px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer border border-gray-300"
         >
-          ← Volver
+          ← Volver a Deporte
         </button>
-        <span className="text-xs font-bold text-gray-700">Paso 3 de 3</span>
+        <span className="text-xs font-black text-amber-950 bg-amber-200/90 px-2.5 py-0.5 rounded-full border border-amber-300">
+          Paso 2: Datos de Entrenamiento
+        </span>
       </div>
 
       <div className="space-y-3.5">
@@ -237,9 +239,10 @@ export const TrainingScreen: React.FC<TrainingScreenProps> = ({
         <button
           type="button"
           onClick={onContinue}
-          className="w-full py-3 px-6 rounded-xl bg-[#e2e8f0] hover:bg-white text-gray-900 font-bold text-sm shadow-md hover:shadow-lg border border-gray-300 transition-all transform active:scale-95 cursor-pointer"
+          className="w-full py-3.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 font-black text-sm shadow-md hover:shadow-lg border-2 border-amber-500 transition-all transform active:scale-95 cursor-pointer flex items-center justify-center gap-2"
         >
-          Continuar
+          <span>Continuar a Confirmación</span>
+          <span>→</span>
         </button>
       </div>
     </div>

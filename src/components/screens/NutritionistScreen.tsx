@@ -85,7 +85,7 @@ interface NutritionistScreenProps {
   onAddRecipe: (recipe: Recipe) => void;
   onDeleteRecipe?: (id: string) => void;
   onUpdateRecipe?: (recipe: Recipe) => void;
-  onViewAthleteHome: () => void;
+  onViewAthleteHome?: () => void;
   currentUserId?: string;
 }
 
@@ -260,7 +260,10 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
       carbs: recipeCarbs,
       fats: recipeFats,
       image: plateImage || HEALTHY_PLATE_PRESETS[0].url,
-      description: `Receta deportiva prescrita por Lic: ${nutritionistName || 'Nutricionista'}`,
+      description: `Receta deportiva prescrita por Lic. ${nutritionistName || 'Nutricionista'}`,
+      authorId: currentUserId || '',
+      authorName: nutritionistName || 'Nutricionista',
+      createdAt: new Date().toISOString(),
       ingredients: recipeIngredients
         .split(',')
         .map((s: string) => s.trim())
@@ -479,14 +482,55 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onViewAthleteHome}
-          className="text-[11px] font-extrabold text-emerald-950 bg-white hover:bg-emerald-50 px-2.5 py-1 rounded-xl shadow-2xs border border-emerald-300 transition-all cursor-pointer"
-          title="Ver cómo ve la aplicación el deportista"
-        >
-          Vista Deportista →
-        </button>
+        <div className="bg-emerald-800/15 border border-emerald-600/30 px-3 py-1.5 rounded-xl text-right">
+          <span className="text-[10px] text-emerald-950 font-black block">Panel Nutricionista</span>
+          <span className="text-[9px] text-emerald-800 font-bold">Gestión por Deportista</span>
+        </div>
+      </div>
+
+      {/* Persistent Athlete Selector Bar (Available for Progreso, Plan Nutricional y Recetas) */}
+      <div className="bg-[#f5eedc] border-2 border-[#e4dcbf] p-3 rounded-2xl shadow-xs space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+            <span>🥋</span> Deportista a Gestionar ({athletes.length}):
+          </span>
+          <span className="text-[11px] bg-emerald-600 text-white font-extrabold px-2.5 py-0.5 rounded-lg shadow-2xs">
+            {athleteProfile.name || 'Sin seleccionar'}
+          </span>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          {athletes.map((ath) => {
+            const isSelected = ath.id === selectedAthleteId;
+            return (
+              <button
+                key={ath.id}
+                type="button"
+                onClick={() => onSelectAthlete(ath.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-black shrink-0 transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-300'
+                    : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
+                }`}
+              >
+                <SportIcon sport={ath.sport} size={15} />
+                <span>{ath.name || 'Sin nombre'}</span>
+                {isSelected && (
+                  <span className="text-[9px] bg-emerald-950 text-emerald-200 px-1 rounded-sm">
+                    Activo
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="bg-white/80 border border-amber-300/60 rounded-xl px-2.5 py-1 text-[10px] text-gray-700 font-semibold flex items-center justify-between">
+          <span>
+            Asignando a: <strong className="text-emerald-800 font-bold">{athleteProfile.name}</strong> ({athleteProfile.sport ? athleteProfile.sport.toUpperCase() : 'DEPORTE'})
+          </span>
+          <span className="text-emerald-700 font-bold">✓ Progreso, Plan y Recetas</span>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -538,32 +582,6 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
       {/* TAB 1: Progreso del Deportista Activo */}
       {activeTab === 'progreso' && (
         <div className="space-y-3">
-          {/* Athlete Selector Strip */}
-          <div className="bg-[#f5eedc] border border-[#e4dcbf] p-2.5 rounded-2xl shadow-xs">
-            <span className="text-[10px] font-black text-gray-700 block mb-1 uppercase tracking-wider">
-              Seleccionar Deportista a Evaluar ({athletes.length}):
-            </span>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-              {athletes.map((ath) => {
-                const isSelected = ath.id === selectedAthleteId;
-                return (
-                  <button
-                    key={ath.id}
-                    type="button"
-                    onClick={() => onSelectAthlete(ath.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-extrabold shrink-0 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
-                        : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <SportIcon sport={ath.sport} size={16} />
-                    <span>{ath.name || 'Sin nombre'}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* Read-Only Notice for Nutritionist */}
           <div className="bg-emerald-950/80 border border-emerald-500/40 p-2.5 rounded-2xl text-emerald-200 text-xs shadow-xs flex items-center justify-between">
@@ -708,9 +726,19 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
         <form onSubmit={handleSaveNutritionPlan} className="space-y-3">
           {savedSuccess && (
             <div className="bg-emerald-100 border border-emerald-400 text-emerald-950 px-3 py-2 rounded-xl text-xs font-bold text-center animate-fadeIn">
-              ✓ Plan Nutricional guardado y sincronizado con el deportista
+              ✓ Plan Nutricional guardado y sincronizado con {athleteProfile.name}
             </div>
           )}
+
+          {/* Active Athlete Notification Banner */}
+          <div className="bg-emerald-50 border border-emerald-300 p-2.5 rounded-2xl flex items-center justify-between text-xs shadow-2xs">
+            <span className="font-extrabold text-emerald-950">
+              Prescribiendo plan para: <strong className="text-emerald-800">{athleteProfile.name}</strong>
+            </span>
+            <span className="text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md font-bold">
+              Meta personalizada
+            </span>
+          </div>
 
           <div className="bg-[#f5eedc] border border-[#e4dcbf] p-3 rounded-2xl shadow-xs space-y-2.5">
             <span className="text-xs font-black text-gray-900 block">
@@ -719,52 +747,53 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Calorías (kcal)</label>
+                <label className="text-[11px] font-black text-black block mb-0.5">Calorías (kcal)</label>
                 <input
                   type="number"
                   value={targetCalories}
                   onChange={(e) => setTargetCalories(Number(e.target.value))}
-                  className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Proteína (g)</label>
+                <label className="text-[11px] font-black text-black block mb-0.5">Proteína (g)</label>
                 <input
                   type="number"
                   value={targetProtein}
                   onChange={(e) => setTargetProtein(Number(e.target.value))}
-                  className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Vasos de Agua</label>
+                <label className="text-[11px] font-black text-black block mb-0.5">Vasos de Agua</label>
                 <input
                   type="number"
                   value={targetWater}
                   onChange={(e) => setTargetWater(Number(e.target.value))}
-                  className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 shadow-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+              <label className="text-[11px] font-black text-black block mb-0.5">
                 Nutri-Dato Activo (se muestra en el Dashboard del Deportista)
               </label>
               <textarea
                 value={activeTip}
                 onChange={(e) => setActiveTip(e.target.value)}
                 rows={2}
-                className="w-full p-2 text-xs font-medium rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                placeholder="Escribe aquí el consejo nutricional para este deportista..."
+                className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
               />
             </div>
           </div>
 
           {/* Recommendations List */}
           <div className="bg-[#f5eedc] border border-[#e4dcbf] p-3 rounded-2xl shadow-xs space-y-2">
-            <span className="text-xs font-black text-gray-900 block">
+            <span className="text-xs font-black text-black block">
               Pautas y Recomendaciones del Nutricionista
             </span>
 
@@ -772,13 +801,13 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
               {recommendations.map((rec: string, i: number) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-2 rounded-xl bg-white border border-gray-200 text-xs"
+                  className="flex items-center justify-between p-2 rounded-xl bg-white border border-gray-300 text-xs text-black font-bold"
                 >
-                  <span className="text-gray-800 pr-2 leading-tight">{rec}</span>
+                  <span className="text-black pr-2 leading-tight">{rec}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveRecommendation(i)}
-                    className="text-rose-600 font-bold px-1.5 hover:bg-rose-50 rounded-lg cursor-pointer"
+                    className="text-rose-600 font-black px-1.5 hover:bg-rose-50 rounded-lg cursor-pointer"
                     title="Eliminar recomendación"
                   >
                     ✕
@@ -794,7 +823,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                 value={newRecommendation}
                 onChange={(e) => setNewRecommendation(e.target.value)}
                 placeholder="Nueva pauta (ej. electrolitos en días calurosos)..."
-                className="flex-1 p-2 text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                className="flex-1 p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               <button
                 type="button"
@@ -818,6 +847,16 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
       {/* TAB 3: Gestión de Recetas del Catálogo & Prescripción */}
       {activeTab === 'recetas' && (
         <div className="space-y-3">
+          {/* Active Athlete Recipes Notice */}
+          <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-2xl flex items-center justify-between text-xs shadow-2xs">
+            <span className="font-extrabold text-amber-950">
+              Recetas y Pautas para: <strong className="text-emerald-800">{athleteProfile.name}</strong>
+            </span>
+            <span className="text-[10px] text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md font-bold">
+              Catálogo Nutricional Seguro
+            </span>
+          </div>
+
           {/* Header Action Bar: Prescribe Toggle & Count */}
           <div className="bg-[#f5eedc] border border-[#e4dcbf] p-3 rounded-2xl shadow-xs flex items-center justify-between">
             <div>
@@ -857,7 +896,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
               {/* Title & Written Meal Time */}
               <div className="space-y-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                  <label className="text-[11px] font-black text-black block mb-0.5">
                     Nombre del platillo *
                   </label>
                   <input
@@ -866,12 +905,12 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                     onChange={(e) => setRecipeTitle(e.target.value)}
                     placeholder="Ej. Bowl de Avena con Frutas y Nueces"
                     required
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-emerald-400"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                  <label className="text-[11px] font-black text-black block mb-0.5">
                     Tiempo de comida correspondiente (escribe el que corresponda) *
                   </label>
                   <input
@@ -880,7 +919,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                     onChange={(e) => setRecipeCategory(e.target.value)}
                     placeholder="Ej. Pre-entreno, Desayuno, Almuerzo, Cena, Merienda AM..."
                     required
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-emerald-400"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                   {/* Quick Select Suggestion Pills */}
                   <div className="flex flex-wrap gap-1 mt-1.5 items-center">
@@ -1028,65 +1067,67 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
               {/* Nutritional Macros */}
               <div className="grid grid-cols-4 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Calorías</label>
+                  <label className="text-[11px] font-black text-black block mb-0.5">Calorías</label>
                   <input
                     type="number"
                     value={recipeCalories}
                     onChange={(e) => setRecipeCalories(Number(e.target.value))}
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Proteína</label>
+                  <label className="text-[11px] font-black text-black block mb-0.5">Proteína</label>
                   <input
                     type="text"
                     value={recipeProtein}
                     onChange={(e) => setRecipeProtein(e.target.value)}
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Carbos</label>
+                  <label className="text-[11px] font-black text-black block mb-0.5">Carbos</label>
                   <input
                     type="text"
                     value={recipeCarbs}
                     onChange={(e) => setRecipeCarbs(e.target.value)}
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-700 block mb-0.5">Grasas</label>
+                  <label className="text-[11px] font-black text-black block mb-0.5">Grasas</label>
                   <input
                     type="text"
                     value={recipeFats}
                     onChange={(e) => setRecipeFats(e.target.value)}
-                    className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center shadow-xs"
                   />
                 </div>
               </div>
 
               {/* Ingredients & Athlete Benefit */}
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[11px] font-black text-black block mb-0.5">
                   Ingredientes (separados por coma)
                 </label>
                 <input
                   type="text"
                   value={recipeIngredients}
                   onChange={(e) => setRecipeIngredients(e.target.value)}
-                  className="w-full p-2 text-xs font-medium rounded-xl border border-gray-300 bg-white"
+                  placeholder="Ej. 100g avena, 1 taza leche, 1 plátano, nueces"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[11px] font-black text-black block mb-0.5">
                   Beneficio para el Rendimiento Deportivo
                 </label>
                 <input
                   type="text"
                   value={recipeBenefit}
                   onChange={(e) => setRecipeBenefit(e.target.value)}
-                  className="w-full p-2 text-xs font-medium rounded-xl border border-gray-300 bg-white"
+                  placeholder="Ej. Carga sostenida de glucógeno y recuperación post-entrenamiento"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 shadow-xs"
                 />
               </div>
 
@@ -1216,46 +1257,65 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                   </div>
 
                   {/* Action Buttons for Nutritionist: Change Photo, Edit Recipe, View Recipe, Delete */}
-                  <div className="flex items-center justify-between pt-1 border-t border-gray-100 flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setEditingPhotoRecipe(recipe)}
-                      className="text-[10px] font-black text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1"
-                      title="Cambiar la imagen del plato de esta receta"
-                    >
-                      <span>📷</span> Cambiar foto
-                    </button>
-
-                    <div className="flex items-center gap-1.5">
-                      {/* EDIT RECIPE BUTTON */}
-                      <button
-                        type="button"
-                        onClick={() => handleStartEditRecipe(recipe)}
-                        className="text-[10px] font-black text-amber-900 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg border border-amber-300 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
-                        title="Editar receta publicada (tiempo de comida, foto, ingredientes, calorías)"
-                      >
-                        <span>✏️</span> Editar
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveRecipeModal(recipe)}
-                        className="text-[10px] font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-                      >
-                        Ver detalle
-                      </button>
-
-                      {/* DELETE RECIPE BUTTON */}
-                      <button
-                        type="button"
-                        onClick={() => setRecipeToDelete(recipe)}
-                        className="text-[10px] font-black text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg border border-rose-200 transition-colors cursor-pointer flex items-center gap-1"
-                        title="Eliminar receta del catálogo"
-                      >
-                        <span>🗑️</span>
-                      </button>
-                    </div>
-                  </div>
+                  {(() => {
+                    const isAuthor = !recipe.authorId || (currentUserId && recipe.authorId === currentUserId);
+                    return (
+                      <div className="flex items-center justify-between pt-1 border-t border-gray-100 flex-wrap gap-1.5">
+                        {isAuthor ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPhotoRecipe(recipe)}
+                              className="text-[10px] font-black text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1"
+                              title="Cambiar la imagen del plato de esta receta"
+                            >
+                              <span>📷</span> Cambiar foto
+                            </button>
+                            <div className="flex items-center gap-1.5">
+                              {/* EDIT RECIPE BUTTON */}
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditRecipe(recipe)}
+                                className="text-[10px] font-black text-amber-900 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg border border-amber-300 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                                title="Editar receta publicada (tiempo de comida, foto, ingredientes, calorías)"
+                              >
+                                <span>✏️</span> Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActiveRecipeModal(recipe)}
+                                className="text-[10px] font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                              >
+                                Ver detalle
+                              </button>
+                              {/* DELETE RECIPE BUTTON */}
+                              <button
+                                type="button"
+                                onClick={() => setRecipeToDelete(recipe)}
+                                className="text-[10px] font-black text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg border border-rose-200 transition-colors cursor-pointer flex items-center gap-1"
+                                title="Eliminar receta del catálogo"
+                              >
+                                <span>🗑️</span>
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[10px] text-gray-500 font-bold flex items-center gap-1">
+                              <span>🔒</span> Receta de {recipe.authorName || 'Especialista'} (Solo lectura)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setActiveRecipeModal(recipe)}
+                              className="text-[10px] font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                            >
+                              Ver detalle
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -1389,21 +1449,21 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
             <form onSubmit={handleSaveEditRecipe} className="overflow-y-auto pr-1 space-y-3 flex-1 text-xs">
               {/* Recipe Title */}
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[10px] font-black text-black block mb-0.5">
                   Nombre del platillo *
                 </label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-amber-400"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:ring-2 focus:ring-amber-400"
                   required
                 />
               </div>
 
               {/* Meal Time (Tiempo de comida) */}
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[10px] font-black text-black block mb-0.5">
                   Tiempo de comida correspondiente (escribe el que corresponda) *
                 </label>
                 <input
@@ -1411,21 +1471,21 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
                   placeholder="Ej. Pre-entreno, Almuerzo, Cena, Merienda AM..."
-                  className="w-full p-2 text-xs font-bold rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-amber-400"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black placeholder:text-gray-500 focus:ring-2 focus:ring-amber-400"
                   required
                 />
                 {/* Quick suggestions */}
                 <div className="flex flex-wrap gap-1 mt-1.5 items-center">
-                  <span className="text-[9px] font-bold text-gray-500">Sugerencias rápidas:</span>
+                  <span className="text-[9px] font-black text-black">Sugerencias rápidas:</span>
                   {MEAL_TIME_SUGGESTIONS.map((sug) => (
                     <button
                       key={sug}
                       type="button"
                       onClick={() => setEditCategory(sug)}
-                      className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-all cursor-pointer ${
+                      className={`px-2 py-0.5 rounded-lg text-[9px] font-black transition-all cursor-pointer ${
                         editCategory.toLowerCase() === sug.toLowerCase()
                           ? 'bg-amber-600 text-white shadow-2xs font-black'
-                          : 'bg-white hover:bg-amber-50 text-gray-700 border border-gray-200'
+                          : 'bg-white hover:bg-amber-50 text-black border border-gray-300'
                       }`}
                     >
                       {sug}
@@ -1437,7 +1497,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
               {/* Photo section */}
               <div className="bg-[#f5eedc] border border-amber-300 rounded-2xl p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black text-gray-900 flex items-center gap-1">
+                  <span className="text-[11px] font-black text-black flex items-center gap-1">
                     <span>📸</span> Foto del Platillo
                   </span>
                   {isProcessingEditPhoto && (
@@ -1456,21 +1516,21 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-gray-800 block mb-1">
+                    <span className="text-[10px] font-black text-black block mb-1">
                       Cambiar foto con:
                     </span>
                     <div className="flex gap-1.5 flex-wrap">
                       <button
                         type="button"
                         onClick={() => editModalCameraRef.current?.click()}
-                        className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-gray-950 font-black text-[10px] rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
+                        className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-black font-black text-[10px] rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
                       >
                         <span>📷</span> Cámara
                       </button>
                       <button
                         type="button"
                         onClick={() => editModalGalleryRef.current?.click()}
-                        className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold text-[10px] rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
+                        className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-300 text-black font-black text-[10px] rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
                       >
                         <span>🖼️</span> Galería
                       </button>
@@ -1480,7 +1540,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
 
                 {/* Healthy Plate Presets for Quick Selection */}
                 <div>
-                  <span className="text-[9px] font-bold text-gray-600 block mb-1">
+                  <span className="text-[9px] font-black text-black block mb-1">
                     O selecciona de fotos de platillos saludables:
                   </span>
                   <div className="grid grid-cols-4 gap-1">
@@ -1507,7 +1567,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowEditUrlInput(!showEditUrlInput)}
-                    className="text-[9px] font-bold text-emerald-800 underline cursor-pointer"
+                    className="text-[9px] font-black text-emerald-900 underline cursor-pointer"
                   >
                     {showEditUrlInput ? 'Ocultar URL externa' : '+ O ingresar URL externa'}
                   </button>
@@ -1518,7 +1578,7 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
                         value={editCustomUrl}
                         onChange={(e) => setEditCustomUrl(e.target.value)}
                         placeholder="https://..."
-                        className="flex-1 p-1 text-[11px] rounded-lg border border-gray-300 bg-white"
+                        className="flex-1 p-1 text-[11px] font-black text-black rounded-lg border border-gray-400 bg-white"
                       />
                       <button
                         type="button"
@@ -1540,76 +1600,76 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
               {/* Prep time, calories, macros */}
               <div className="grid grid-cols-5 gap-1.5">
                 <div className="col-span-1">
-                  <label className="text-[9px] font-bold text-gray-700 block mb-0.5">Tiempo</label>
+                  <label className="text-[9px] font-black text-black block mb-0.5">Tiempo</label>
                   <input
                     type="text"
                     value={editPrepTime}
                     onChange={(e) => setEditPrepTime(e.target.value)}
-                    className="w-full p-1.5 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-1.5 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center"
                     placeholder="15 min"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[9px] font-bold text-gray-700 block mb-0.5">Calorías</label>
+                  <label className="text-[9px] font-black text-black block mb-0.5">Calorías</label>
                   <input
                     type="number"
                     value={editCalories}
                     onChange={(e) => setEditCalories(Number(e.target.value))}
-                    className="w-full p-1.5 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-1.5 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[9px] font-bold text-gray-700 block mb-0.5">Proteína</label>
+                  <label className="text-[9px] font-black text-black block mb-0.5">Proteína</label>
                   <input
                     type="text"
                     value={editProtein}
                     onChange={(e) => setEditProtein(e.target.value)}
-                    className="w-full p-1.5 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-1.5 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[9px] font-bold text-gray-700 block mb-0.5">Carbos</label>
+                  <label className="text-[9px] font-black text-black block mb-0.5">Carbos</label>
                   <input
                     type="text"
                     value={editCarbs}
                     onChange={(e) => setEditCarbs(e.target.value)}
-                    className="w-full p-1.5 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-1.5 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[9px] font-bold text-gray-700 block mb-0.5">Grasas</label>
+                  <label className="text-[9px] font-black text-black block mb-0.5">Grasas</label>
                   <input
                     type="text"
                     value={editFats}
                     onChange={(e) => setEditFats(e.target.value)}
-                    className="w-full p-1.5 text-xs font-bold rounded-xl border border-gray-300 bg-white text-center"
+                    className="w-full p-1.5 text-xs font-black rounded-xl border border-gray-400 bg-white text-black text-center"
                   />
                 </div>
               </div>
 
               {/* Ingredients */}
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[10px] font-black text-black block mb-0.5">
                   Ingredientes (separados por coma)
                 </label>
                 <input
                   type="text"
                   value={editIngredients}
                   onChange={(e) => setEditIngredients(e.target.value)}
-                  className="w-full p-2 text-xs font-medium rounded-xl border border-gray-300 bg-white"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black"
                 />
               </div>
 
               {/* Athlete Benefit */}
               <div>
-                <label className="text-[10px] font-bold text-gray-700 block mb-0.5">
+                <label className="text-[10px] font-black text-black block mb-0.5">
                   Beneficio para el Rendimiento Deportivo
                 </label>
                 <input
                   type="text"
                   value={editBenefit}
                   onChange={(e) => setEditBenefit(e.target.value)}
-                  className="w-full p-2 text-xs font-medium rounded-xl border border-gray-300 bg-white"
+                  className="w-full p-2 text-xs font-black rounded-xl border border-gray-400 bg-white text-black"
                 />
               </div>
 
@@ -1643,7 +1703,8 @@ export const NutritionistScreen: React.FC<NutritionistScreenProps> = ({
             handleDeleteRecipe(id);
             setActiveRecipeModal(null);
           }}
-          canDelete={true}
+          currentUserId={currentUserId}
+          canDelete={!activeRecipeModal.authorId || activeRecipeModal.authorId === currentUserId}
         />
       )}
 

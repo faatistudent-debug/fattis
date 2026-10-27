@@ -23,7 +23,7 @@ interface CoachScreenProps {
   logsHistory: Record<string, DayHabitLog>;
   injuries: InjuryRecord[];
   onUpdateInjuries: (injuries: InjuryRecord[]) => void;
-  onViewAthleteHome: () => void;
+  onViewAthleteHome?: () => void;
 }
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({
@@ -195,14 +195,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onViewAthleteHome}
-          className="text-[11px] font-extrabold text-teal-950 bg-white hover:bg-teal-50 px-2.5 py-1 rounded-xl shadow-2xs border border-teal-300 transition-all cursor-pointer"
-          title="Ver aplicación del deportista"
-        >
-          Vista Deportista →
-        </button>
+        <div className="bg-teal-800/15 border border-teal-600/30 px-3 py-1.5 rounded-xl text-right">
+          <span className="text-[10px] text-teal-950 font-black block">Panel Entrenador</span>
+          <span className="text-[9px] text-teal-800 font-bold">Gestión por Deportista</span>
+        </div>
       </div>
 
       {/* Athlete Selector Bar */}

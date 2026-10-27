@@ -67,30 +67,12 @@ export type ScreenId =
   | 'page_nutritionist'
   | 'page_coach';
 
-const SCREEN_LABELS: { id: ScreenId; pageNum: string; label: string }[] = [
-  { id: 'page1_splash', pageNum: '1', label: 'Inicio / Rendí+' },
-  { id: 'page2_name', pageNum: '2', label: 'Nombre' },
-  { id: 'page3_profile', pageNum: '3', label: 'Deporte & Datos' },
-  { id: 'page4_training', pageNum: '4', label: 'Entrenamiento' },
-  { id: 'page5_ready', pageNum: '5', label: 'Listo para empezar' },
-  { id: 'page6_home', pageNum: '6', label: 'Dashboard Hoy' },
-  { id: 'page7_weekly', pageNum: '7', label: 'Cumplimiento semanal' },
-  { id: 'page8_calendar', pageNum: '8', label: 'Calendario Hábitos' },
-  { id: 'page11_explore', pageNum: '9', label: 'Explorar' },
-  { id: 'page12_recipes', pageNum: '10', label: 'Recetas saludables' },
-  { id: 'page_nutritionist', pageNum: 'Nutri', label: 'Panel Nutricionista (Info & Progreso)' },
-  { id: 'page_coach', pageNum: 'Coach', label: 'Panel Entrenador (Lesiones & Progreso)' },
-];
-
 export default function App() {
   const {
     currentUser,
     userProfile,
     loading,
     signOutUser,
-    quickLoginDemo,
-    savedUsers,
-    switchUserRole,
   } = useAuth();
 
   // Role determined by server profile
@@ -286,16 +268,32 @@ export default function App() {
     await saveDailyHabitLog(targetAthleteUid, updated);
   };
 
-  // Recipe management handlers (Firestore backed)
+  // Recipe management handlers (Firestore backed with authorship protection)
   const handleAddRecipe = async (newRecipe: Recipe) => {
-    await saveRecipeToFirestore(newRecipe);
+    const enrichedRecipe: Recipe = {
+      ...newRecipe,
+      authorId: newRecipe.authorId || currentUser?.uid || '',
+      authorName: newRecipe.authorName || userProfile?.name || 'Usuario',
+      authorEmail: newRecipe.authorEmail || currentUser?.email || '',
+      createdAt: newRecipe.createdAt || new Date().toISOString(),
+    };
+    await saveRecipeToFirestore(enrichedRecipe);
   };
 
   const handleDeleteRecipe = async (recipeId: string) => {
+    const target = recipes.find((r) => r.id === recipeId);
+    if (target && target.authorId && target.authorId !== currentUser?.uid) {
+      console.warn('Acceso denegado: Solo el autor que publicó la receta puede eliminarla.');
+      return;
+    }
     await deleteRecipeFromFirestore(recipeId);
   };
 
   const handleUpdateRecipe = async (updatedRecipe: Recipe) => {
+    if (updatedRecipe.authorId && updatedRecipe.authorId !== currentUser?.uid) {
+      console.warn('Acceso denegado: Solo el autor que publicó la receta puede modificarla.');
+      return;
+    }
     await saveRecipeToFirestore(updatedRecipe);
   };
 
@@ -356,169 +354,61 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0f172a] text-gray-100 flex flex-col items-center p-2 sm:p-4 font-sans select-none">
       
-      {/* Top Global Control Bar: Session Security & Role Display */}
-      <header className="w-full max-w-4xl bg-[#1e293b]/95 border border-slate-700/80 rounded-2xl p-2.5 sm:p-3 mb-3 shadow-lg flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          
-          {/* User Profile & Role Info */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950 text-sm shadow-md">
-              {userProfile?.name?.charAt(0) || 'U'}
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-white text-xs sm:text-sm">
-                  {userProfile?.name || 'Usuario'}
-                </span>
-                <span
-                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    currentRole === 'Deportista'
-                      ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
-                      : currentRole === 'Nutricionista'
-                      ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/40'
-                      : 'bg-teal-400/20 text-teal-300 border border-teal-400/40'
-                  }`}
-                >
-                  {currentRole}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                <Lock className="w-3 h-3 text-cyan-400" />
-                <span className="truncate max-w-[200px]">{currentUser.email}</span>
-                <span className="text-emerald-400 font-semibold">• Sesión Servidor Activa</span>
-              </div>
-            </div>
+      {/* Top Global Control Bar: Clean Session & Role Display */}
+      <header className="w-full max-w-4xl bg-[#1e293b]/95 border border-slate-700/80 rounded-2xl p-2.5 sm:p-3 mb-3 shadow-lg flex items-center justify-between gap-2">
+        {/* User Profile & Role Info (Locked to authenticated session) */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950 text-sm shadow-md">
+            {userProfile?.name?.charAt(0) || 'U'}
           </div>
-
-          {/* Role switcher for the logged-in user */}
-          <div className="flex items-center gap-1 bg-slate-950/80 px-2 py-1 rounded-xl border border-slate-750">
-            <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">Rol:</span>
-            <button
-              type="button"
-              onClick={() => switchUserRole('Nutricionista')}
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                currentRole === 'Nutricionista'
-                  ? 'bg-emerald-500 text-slate-950 shadow ring-1 ring-emerald-300'
-                  : 'text-slate-400 hover:text-emerald-300 bg-slate-800/60'
-              }`}
-              title="Cambiar a Panel de Nutricionista"
-            >
-              🥗 Nutri
-            </button>
-            <button
-              type="button"
-              onClick={() => switchUserRole('Deportista')}
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                currentRole === 'Deportista'
-                  ? 'bg-amber-400 text-slate-950 shadow ring-1 ring-amber-300'
-                  : 'text-slate-400 hover:text-amber-300 bg-slate-800/60'
-              }`}
-              title="Cambiar a Vista Deportista"
-            >
-              🥋 Deportista
-            </button>
-            <button
-              type="button"
-              onClick={() => switchUserRole('Entrenador')}
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                currentRole === 'Entrenador'
-                  ? 'bg-teal-400 text-slate-950 shadow ring-1 ring-teal-300'
-                  : 'text-slate-400 hover:text-teal-300 bg-slate-800/60'
-              }`}
-              title="Cambiar a Vista Entrenador"
-            >
-              ⏱️ Coach
-            </button>
-          </div>
-
-          {/* Quick Account Switcher & Sign Out */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button
-              type="button"
-              onClick={() => setIsPhoneFrame(!isPhoneFrame)}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1 cursor-pointer"
-              title="Alternar marco de teléfono"
-            >
-              {isPhoneFrame ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline text-[10px]">
-                {isPhoneFrame ? 'Vista Pantalla' : 'Vista Móvil'}
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-white text-xs sm:text-sm">
+                {userProfile?.name || 'Usuario'}
               </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={signOutUser}
-              className="px-2.5 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-              title="Cerrar sesión segura de esta cuenta"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="text-[11px]">Cerrar Sesión</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Account Switcher Demo Bar (To instantly verify individual access & data isolation) */}
-        <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
-          <span className="text-slate-400 text-[10px] font-semibold flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Acceso concedido según usuario: <strong className="text-cyan-300 font-bold">{userProfile?.name} ({currentRole})</strong>
-          </span>
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[10px] text-slate-500 mr-1 hidden sm:inline">Cambiar cuenta:</span>
-            {savedUsers.map((u) => {
-              const isCurrent = currentUser?.email?.toLowerCase() === u.email.toLowerCase();
-              let icon = '🥋';
-              if (u.role === 'Nutricionista') icon = '🥗';
-              else if (u.role === 'Entrenador') icon = '⏱️';
-              else if (u.name.toLowerCase().includes('sof')) icon = '🏊';
-
-              return (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => {
-                    if (u.username === 'faati') quickLoginDemo('faati');
-                    else if (u.username === 'lucas') quickLoginDemo('lucas');
-                    else if (u.username === 'sofia') quickLoginDemo('sofia');
-                    else if (u.username === 'claudia') quickLoginDemo('nutri');
-                    else if (u.username === 'carlos') quickLoginDemo('coach');
-                    else signOutUser();
-                  }}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                    isCurrent
-                      ? 'bg-cyan-500 text-slate-950 font-black shadow-sm ring-1 ring-cyan-300'
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                  }`}
-                  title={`Usuario: ${u.name} (${u.role}) - ${u.email}`}
-                >
-                  <span>{icon}</span>
-                  <span>{u.name.split(' ')[0]}</span>
-                  {isCurrent && <span className="text-[9px] bg-slate-950 text-cyan-300 px-1 rounded-sm">Activo</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Screen selector for direct navigation */}
-        <div className="pt-1.5 border-t border-slate-800 flex items-center gap-2 overflow-x-auto text-[11px] pb-0.5">
-          <span className="text-[10px] text-slate-400 shrink-0">Pantallas:</span>
-          {SCREEN_LABELS.map((item) => {
-            const isCurrent = activeScreen === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveScreen(item.id)}
-                className={`px-2 py-0.5 rounded-md text-[10px] shrink-0 font-medium transition cursor-pointer ${
-                  isCurrent
-                    ? 'bg-cyan-500 text-slate-950 font-bold'
-                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  currentRole === 'Deportista'
+                    ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                    : currentRole === 'Nutricionista'
+                    ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/40'
+                    : 'bg-teal-400/20 text-teal-300 border border-teal-400/40'
                 }`}
               >
-                {item.pageNum}. {item.label.split(' ')[0]}
-              </button>
-            );
-          })}
+                {currentRole === 'Nutricionista' ? '🥗 Nutricionista' : currentRole === 'Entrenador' ? '⏱️ Entrenador' : '🥋 Deportista'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-slate-400">
+              <Lock className="w-3 h-3 text-cyan-400" />
+              <span className="truncate max-w-[200px]">{currentUser.email}</span>
+              <span className="text-emerald-400 font-semibold">• Sesión Activa</span>
+            </div>
+          </div>
+        </div>
+
+        {/* View Toggle & Sign Out */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <button
+            type="button"
+            onClick={() => setIsPhoneFrame(!isPhoneFrame)}
+            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1 cursor-pointer transition"
+            title="Alternar marco de teléfono"
+          >
+            {isPhoneFrame ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline text-[10px]">
+              {isPhoneFrame ? 'Vista Pantalla' : 'Vista Móvil'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={signOutUser}
+            className="px-2.5 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+            title="Cerrar sesión segura de esta cuenta"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="text-[11px]">Cerrar Sesión</span>
+          </button>
         </div>
       </header>
 
@@ -553,33 +443,6 @@ export default function App() {
               <Lock className="w-3 h-3 text-amber-600" />
               <span>Registros aislados</span>
             </div>
-          </div>
-        )}
-
-        {/* Nutritionist or Coach header when inspecting athlete view */}
-        {currentRole === 'Nutricionista' && isMainAppScreen && (
-          <div className="bg-emerald-500 text-emerald-950 px-4 py-1.5 flex items-center justify-between text-[11px] font-black">
-            <span>🥗 Vista Nutricionista (Dra. {userProfile?.name})</span>
-            <button
-              type="button"
-              onClick={() => setActiveScreen('page_nutritionist')}
-              className="bg-emerald-950 text-white px-2 py-0.5 rounded-md hover:bg-black cursor-pointer text-[10px]"
-            >
-              Volver a Panel Nutri →
-            </button>
-          </div>
-        )}
-
-        {currentRole === 'Entrenador' && isMainAppScreen && (
-          <div className="bg-teal-500 text-teal-950 px-4 py-1.5 flex items-center justify-between text-[11px] font-black">
-            <span>🥋 Vista Entrenador (Prof. {userProfile?.name})</span>
-            <button
-              type="button"
-              onClick={() => setActiveScreen('page_coach')}
-              className="bg-teal-950 text-white px-2 py-0.5 rounded-md hover:bg-black cursor-pointer text-[10px]"
-            >
-              Volver a Panel Coach →
-            </button>
           </div>
         )}
 
@@ -671,7 +534,8 @@ export default function App() {
               recipes={recipes}
               injuries={activeAthlete.injuries}
               onDeleteRecipe={handleDeleteRecipe}
-              canDelete={currentRole === 'Nutricionista'}
+              currentUserId={currentUser?.uid}
+              canDelete={false}
               onOpenCoachView={() => {
                 setActiveScreen('page_coach');
               }}
@@ -683,8 +547,9 @@ export default function App() {
             <RecipesScreen
               onBack={() => setActiveScreen('page11_explore')}
               recipes={recipes}
+              currentUserId={currentUser?.uid}
               onDeleteRecipe={handleDeleteRecipe}
-              canDelete={currentRole === 'Nutricionista'}
+              canDelete={false}
             />
           )}
 
@@ -712,7 +577,7 @@ export default function App() {
               onAddRecipe={handleAddRecipe}
               onDeleteRecipe={handleDeleteRecipe}
               onUpdateRecipe={handleUpdateRecipe}
-              onViewAthleteHome={() => setActiveScreen('page6_home')}
+              currentUserId={currentUser?.uid}
             />
           )}
 
@@ -738,13 +603,12 @@ export default function App() {
                   }
                 }
               }}
-              onViewAthleteHome={() => setActiveScreen('page6_home')}
             />
           )}
         </div>
 
-        {/* Bottom Navigation Bar (Visible on main screens) */}
-        {isMainAppScreen && (
+        {/* Bottom Navigation Bar (Visible strictly for Deportistas on main screens) */}
+        {isMainAppScreen && currentRole === 'Deportista' && (
           <BottomNav
             currentTab={getCurrentTab()}
             onTabChange={(tab) => handleTabChange(tab)}

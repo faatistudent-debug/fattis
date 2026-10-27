@@ -33,6 +33,7 @@ export interface UserAccountDoc {
   sessionDuration?: string;
   habitualIntensity?: string;
   habitualSchedule?: string;
+  completedOnboarding?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +75,7 @@ export async function createOrUpdateUserProfile(
         sessionDuration: data.sessionDuration || '1 a 2 horas',
         habitualIntensity: data.habitualIntensity || 'Moderada',
         habitualSchedule: data.habitualSchedule || 'Tarde',
+        completedOnboarding: data.completedOnboarding ?? false,
         createdAt: now,
         updatedAt: now,
       };
@@ -83,6 +85,30 @@ export async function createOrUpdateUserProfile(
         ...data,
         updatedAt: now,
       });
+    }
+
+    // Also synchronize sport and training fields with athletes collection doc
+    try {
+      const athleteRef = doc(db, 'athletes', userId);
+      const athSnap = await getDoc(athleteRef);
+      if (athSnap.exists()) {
+        const updatePayload: Record<string, any> = {};
+        if (data.name !== undefined) updatePayload.name = data.name;
+        if (data.sport !== undefined) updatePayload.sport = data.sport;
+        if (data.ageGroup !== undefined) updatePayload.ageGroup = data.ageGroup;
+        if (data.gender !== undefined) updatePayload.gender = data.gender;
+        if (data.beltColor !== undefined) updatePayload.beltColor = data.beltColor;
+        if (data.weeklyFrequency !== undefined) updatePayload.weeklyFrequency = data.weeklyFrequency;
+        if (data.sessionDuration !== undefined) updatePayload.sessionDuration = data.sessionDuration;
+        if (data.habitualIntensity !== undefined) updatePayload.habitualIntensity = data.habitualIntensity;
+        if (data.habitualSchedule !== undefined) updatePayload.habitualSchedule = data.habitualSchedule;
+
+        if (Object.keys(updatePayload).length > 0) {
+          await updateDoc(athleteRef, updatePayload);
+        }
+      }
+    } catch {
+      // Ignored non-critical sync
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);

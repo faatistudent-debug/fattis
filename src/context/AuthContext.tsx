@@ -16,6 +16,14 @@ import {
   UserAccountDoc,
   saveDailyHabitLog,
 } from '../services/db';
+import {
+  registerNewUser,
+  loginUser,
+  persistActiveSession,
+  getActiveSession,
+  clearActiveSession,
+  createSyntheticUser,
+} from '../services/authService';
 import { RoleType } from '../types';
 import { INITIAL_DAY_LOG, INITIAL_LOGS_HISTORY } from '../data/initialData';
 import {
@@ -88,9 +96,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // 1. Check for stored active session on boot
+    const stored = getActiveSession();
+    if (stored) {
+      getUserProfile(stored.userId).then((profile) => {
+        if (profile) {
+          const userObj = createSyntheticUser(stored.userId, stored.email, stored.name);
+          setCurrentUser(userObj);
+          setUserProfile(profile);
+          setLoading(false);
+        } else {
+          clearActiveSession();
+          setLoading(false);
+        }
+      }).catch(() => {
+        setLoading(false);
+      });
+    }
+
+    // 2. Also listen for Firebase native Auth (e.g. Google Sign-In)
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      await refreshUserProfile(user);
+      if (user) {
+        setCurrentUser(user);
+        await refreshUserProfile(user);
+      } else if (!getActiveSession()) {
+        setCurrentUser(null);
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -98,8 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInEmail = async (email: string, pass: string) => {
     setLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      await refreshUserProfile(cred.user);
+      const { user, profile } = await loginUser(email, pass);
+      setCurrentUser(user);
+      setUserProfile(profile);
     } finally {
       setLoading(false);
     }
@@ -112,61 +146,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     const trimmed = identifier.trim();
     if (!trimmed) {
-      throw new Error('Por favor ingresa tu nombre de usuario o correo');
+      throw new Error('Por favor ingresa tu correo electrónico.');
+    }
+    const cleanPass = pass.trim();
+    if (!cleanPass) {
+      throw new Error('Por favor ingresa tu contraseña.');
     }
 
     setLoading(true);
     try {
-      const { email, matchedUser, isDemoUser } = resolveIdentifierToEmail(trimmed);
-      const effectivePassword = (isDemoUser && !pass) ? 'RendiDemo2026!' : pass;
+      // 1. Authenticate with universal Firestore accounts service
+      const { user, profile } = await loginUser(trimmed, cleanPass, desiredRole);
+      setCurrentUser(user);
+      setUserProfile(profile);
 
-      if (!effectivePassword) {
-        throw new Error('Por favor ingresa tu contraseña');
-      }
-
-      let credUser: User;
+      // 2. Also attempt Firebase Auth in parallel if configured (non-blocking)
       try {
-        const cred = await signInWithEmailAndPassword(auth, email, effectivePassword);
-        credUser = cred.user;
-      } catch (authErr: any) {
-        // If not found or invalid credential and user provided a password >= 6 chars, auto-register as requested role
-        if (
-          (authErr?.code === 'auth/user-not-found' || authErr?.code === 'auth/invalid-credential') &&
-          effectivePassword.length >= 6
-        ) {
-          const createRes = await createUserWithEmailAndPassword(auth, email, effectivePassword);
-          credUser = createRes.user;
-        } else {
-          throw authErr;
-        }
+        await signInWithEmailAndPassword(auth, user.email || trimmed, cleanPass);
+      } catch {
+        // Ignored if provider disabled in Firebase
       }
-
-      // If user specified a desired role (e.g. Nutricionista), enforce it on profile
-      const targetRole = desiredRole || matchedUser?.role || 'Nutricionista';
-      await createOrUpdateUserProfile(credUser.uid, {
-        userId: credUser.uid,
-        email,
-        name: matchedUser?.name || trimmed,
-        role: targetRole,
-      });
-
-      // Record last used and refresh list
-      if (matchedUser) {
-        saveRegisteredUserRecord({
-          ...matchedUser,
-          role: targetRole,
-        });
-      } else {
-        saveRegisteredUserRecord({
-          name: trimmed,
-          username: slugifyUsername(trimmed),
-          email,
-          role: targetRole,
-        });
-      }
-      setSavedUsers(getSavedUsersList());
-
-      await refreshUserProfile(credUser);
     } finally {
       setLoading(false);
     }
@@ -175,46 +174,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpEmail = async (email: string, pass: string, name: string, role: RoleType) => {
     setLoading(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await createOrUpdateUserProfile(cred.user.uid, {
-        userId: cred.user.uid,
-        email,
-        name,
-        role,
-      });
+      // 1. Register with universal Firestore accounts service
+      const { user, profile } = await registerNewUser(email, pass, name, role);
+      setCurrentUser(user);
+      setUserProfile(profile);
 
-      if (role === 'Deportista') {
-        await initAthleteDoc(cred.user.uid, {
-          id: cred.user.uid,
-          name,
-        });
-        // Initialize an isolated day log for this new athlete
-        const todayStr = new Date().toISOString().split('T')[0];
-        await saveDailyHabitLog(cred.user.uid, {
-          date: todayStr,
-          waterGlasses: 0,
-          sleepHours: 8,
-          sleepCompleted: false,
-          trainingHours: 1,
-          trainingCompleted: false,
-          meals: { desayuno: false, merienda_am: false, almuerzo: false, merienda_pm: false, cena: false },
-          customMeals: [],
-          mood: 'feliz',
-          moodNote: '¡Bienvenido a Rendí+! Empieza registrando tus tiempos de comida e hidratación.',
-          restQuality: 'Bueno',
-        });
+      // 2. Also attempt Firebase Auth in parallel if configured (non-blocking)
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      } catch {
+        // Ignored if provider disabled in Firebase
       }
-
-      // Save user record for quick username logins
-      saveRegisteredUserRecord({
-        name,
-        username: slugifyUsername(name),
-        email,
-        role,
-      });
-      setSavedUsers(getSavedUsersList());
-
-      await refreshUserProfile(cred.user);
     } finally {
       setLoading(false);
     }
@@ -283,7 +253,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOutUser = async () => {
     setLoading(true);
     try {
-      await signOut(auth);
+      clearActiveSession();
+      try {
+        await signOut(auth);
+      } catch {}
+      setCurrentUser(null);
       setUserProfile(null);
     } finally {
       setLoading(false);

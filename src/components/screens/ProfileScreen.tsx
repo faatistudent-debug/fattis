@@ -31,21 +31,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="text-xs text-gray-700 bg-white/70 px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer"
+          className="text-xs font-bold text-gray-800 bg-white/80 px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer border border-gray-300"
         >
           ← Volver
         </button>
-        <span className="text-xs font-bold text-gray-700">Paso 2 de 3</span>
+        <span className="text-xs font-black text-amber-950 bg-amber-200/90 px-2.5 py-0.5 rounded-full border border-amber-300">
+          Paso 1: Deporte & Perfil
+        </span>
       </div>
 
       <div className="space-y-4">
         {/* Section 1: Deporte */}
         <div>
-          {/* Header pill: Deporte (Pink/salmon) */}
-          <div className="bg-[#fecdd3] border border-[#fda4af] py-1.5 px-4 rounded-xl text-center shadow-xs mb-2">
-            <h3 className="text-gray-900 font-extrabold text-sm tracking-wide">
-              Deporte
+          {/* Header pill: Deporte */}
+          <div className="bg-[#fecdd3] border border-[#fda4af] py-2 px-4 rounded-xl text-center shadow-xs mb-2.5">
+            <h3 className="text-gray-900 font-black text-sm tracking-wide">
+              ¿Qué deporte practicas?
             </h3>
+            <p className="text-[10px] text-gray-700 font-bold mt-0.5">
+              Selecciona tu disciplina principal:
+            </p>
           </div>
 
           {/* Sports Cards */}
@@ -73,12 +78,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               );
             })}
           </div>
+          <div className="text-center mt-1.5">
+            <span className="text-xs font-black text-gray-900 uppercase tracking-wide bg-white/80 px-3 py-0.5 rounded-full border border-gray-300 shadow-2xs">
+              Deporte seleccionado: {sports.find((s) => s.id === profile.sport)?.label || profile.sport}
+            </span>
+          </div>
         </div>
 
         {/* Section 2: Datos importantes sobre vos */}
         <div className="bg-[#cbd5e1]/70 p-3.5 rounded-2xl border border-white/60 space-y-3.5">
           <div className="bg-[#d5d0b5] py-1.5 px-4 rounded-xl text-center shadow-xs">
-            <h4 className="text-gray-900 font-bold text-xs tracking-wide">
+            <h4 className="text-gray-900 font-black text-xs tracking-wide">
               Datos importantes sobre vos
             </h4>
           </div>
@@ -86,7 +96,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Subheader: Edad */}
           <div>
             <div className="bg-[#cbd5e1] py-0.5 px-3 rounded-lg text-center mb-1.5 w-24 mx-auto shadow-2xs">
-              <span className="text-[11px] font-bold text-gray-800">Edad</span>
+              <span className="text-[11px] font-black text-gray-900">Edad</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {(['12 - 17 a', '18 - 29 a', '> 30 a'] as AgeGroup[]).map((age) => {
@@ -101,7 +111,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     key={age}
                     type="button"
                     onClick={() => onChange({ ageGroup: age })}
-                    className={`py-3 px-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer border ${bgColors[age]} ${
+                    className={`py-3 px-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${bgColors[age]} ${
                       isSelected
                         ? 'ring-2 ring-gray-900 shadow-md scale-102 border-gray-900'
                         : 'border-transparent opacity-85 hover:opacity-100 shadow-2xs'
@@ -117,7 +127,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Subheader: Sexo */}
           <div>
             <div className="bg-[#cbd5e1] py-0.5 px-3 rounded-lg text-center mb-1.5 w-24 mx-auto shadow-2xs">
-              <span className="text-[11px] font-bold text-gray-800">Sexo</span>
+              <span className="text-[11px] font-black text-gray-900">Sexo</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {(['Masculino', 'Femenino'] as Gender[]).map((gender) => {
@@ -131,7 +141,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     key={gender}
                     type="button"
                     onClick={() => onChange({ gender })}
-                    className={`py-3 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer border ${bgClass} ${
+                    className={`py-3 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border ${bgClass} ${
                       isSelected
                         ? 'ring-2 ring-gray-900 shadow-md scale-102 border-gray-900'
                         : 'border-transparent opacity-85 hover:opacity-100 shadow-2xs'
@@ -144,47 +154,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           </div>
 
-          {/* Subheader: Accede como */}
-          <div>
-            <div className="bg-[#cbd5e1] py-0.5 px-3 rounded-lg text-center mb-1.5 w-32 mx-auto shadow-2xs">
-              <span className="text-[11px] font-bold text-gray-800">Accede como</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(['Deportista', 'Nutricionista', 'Entrenador'] as RoleType[]).map((role) => {
-                const isSelected = profile.role === role;
-                const bgClasses: Record<RoleType, string> = {
-                  Deportista: 'bg-[#fef08a] text-amber-950',
-                  Nutricionista: 'bg-[#bbf7d0] text-emerald-950',
-                  Entrenador: 'bg-[#99f6e4] text-teal-950',
-                };
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => onChange({ role })}
-                    className={`py-3 px-1 rounded-xl text-[11px] font-extrabold transition-all cursor-pointer border ${bgClasses[role]} ${
-                      isSelected
-                        ? 'ring-2 ring-gray-900 shadow-md scale-102 border-gray-900'
-                        : 'border-transparent opacity-85 hover:opacity-100 shadow-2xs'
-                    }`}
-                  >
-                    {role}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Account profile confirmation */}
+          <div className="bg-white/80 p-2.5 rounded-xl border border-gray-300 flex items-center justify-between text-xs">
+            <span className="font-bold text-gray-800">Modo de cuenta:</span>
+            <span className="font-black bg-amber-400 text-amber-950 px-2 py-0.5 rounded-lg shadow-2xs">
+              🥋 Deportista Rendí+
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Continue */}
+      {/* Continue to Training Data */}
       <div className="pt-4">
         <button
           type="button"
           onClick={onContinue}
-          className="w-full py-3 px-6 rounded-xl bg-[#e2e8f0] hover:bg-white text-gray-900 font-bold text-sm shadow-md hover:shadow-lg border border-gray-300 transition-all transform active:scale-95 cursor-pointer"
+          className="w-full py-3.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 font-black text-sm shadow-md hover:shadow-lg border-2 border-amber-500 transition-all transform active:scale-95 cursor-pointer flex items-center justify-center gap-2"
         >
-          Continuar
+          <span>Continuar a Datos de Entrenamiento</span>
+          <span>→</span>
         </button>
       </div>
     </div>
